@@ -3,7 +3,6 @@ from framework import *
 from typing import Iterator
 from dataclasses import dataclass
 
-
 __all__ = ['MapState', 'MapProblem']
 
 
@@ -40,7 +39,7 @@ class MapProblem(GraphProblem):
         self.streets_map = streets_map
         self.target_junction_id = target_junction_id
         self.name += f'(src: {source_junction_id} dst: {target_junction_id})'
-    
+
     def expand_state_with_costs(self, state_to_expand: GraphProblemState) -> Iterator[OperatorResult]:
         """
         For a given state, iterates over its successor states.
@@ -66,7 +65,9 @@ class MapProblem(GraphProblem):
         #  Note: Generally, in order to check whether a variable is set to None you should use the expression:
         #        `my_variable_to_check is None`, and particularly do NOT use comparison (==).
 
-        yield OperatorResult(successor_state=MapState(self.target_junction_id), operator_cost=7)  # TODO: remove this line!
+        for link in junction.outgoing_links:
+            if link is not None:
+                yield OperatorResult(successor_state=MapState(link.target), operator_cost=link.distance)
 
     def is_goal(self, state: GraphProblemState) -> bool:
         """
