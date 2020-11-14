@@ -108,12 +108,18 @@ def toy_map_problem_experiments():
     #       solve the same `toy_map_problem` with it and print the results (as before).
     # Notice: AStar constructor receives the heuristic *type* (ex: `MyHeuristicClass`),
     #         and NOT an instance of the heuristic (eg: not `MyHeuristicClass()`).
-    exit()  # TODO: remove!
+    toy_map_problem = MapProblem(streets_map, 54, 549)
+    astarr = AStar(NullHeuristic)
+    res = astarr.solve_problem(toy_map_problem)
+    print(res)
 
     # Ex.13
     # TODO: create an instance of `AStar` with the `AirDistHeuristic`,
     #       solve the same `toy_map_problem` with it and print the results (as before).
-    exit()  # TODO: remove!
+    toy_map_problem = MapProblem(streets_map, 54, 549)
+    astarr2 = AStar(AirDistHeuristic)
+    res = astarr2.solve_problem(toy_map_problem)
+    print(res)
 
     # Ex.15
     # TODO:
@@ -230,7 +236,8 @@ def multiple_objectives_mda_problem_experiments():
     print('Solve the MDA problem (moderate input, distance & tests-travel-distance objectives).')
 
     moderate_mda_problem_with_distance_cost = get_mda_problem('moderate', MDAOptimizationObjective.Distance)
-    moderate_mda_problem_with_tests_travel_dist_cost = get_mda_problem('moderate', MDAOptimizationObjective.TestsTravelDistance)
+    moderate_mda_problem_with_tests_travel_dist_cost = get_mda_problem('moderate',
+                                                                       MDAOptimizationObjective.TestsTravelDistance)
 
     # Ex.35
     # TODO: create an instance of `AStar` with the `MDATestsTravelDistToNearestLabHeuristic`,
