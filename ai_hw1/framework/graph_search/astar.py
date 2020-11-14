@@ -50,8 +50,8 @@ class AStar(BestFirstSearch):
         Notice: You may use `search_node.g_cost`, `self.heuristic_weight`, and `self.heuristic_function`.
         """
 
-        return ((1-self.heuristic_weight)*search_node.g_cost)+(self.heuristic_weight*self.heuristic_function(search_node))
-
+        return ((1 - self.heuristic_weight) * search_node.g_cost) + (
+                self.heuristic_weight * self.heuristic_function.estimate(search_node.state))
 
     def _open_successor_node(self, problem: GraphProblem, successor_node: SearchNode):
         """
@@ -73,4 +73,20 @@ class AStar(BestFirstSearch):
                   but still could be improved.
         """
 
-        raise NotImplementedError  # TODO: remove this line!
+        # close group already have the same state,need to replace with the new state
+        if self.close.has_state(successor_node.state):
+            oldSameState = self.close.get_node_by_state(successor_node.state)
+            if successor_node.g_cost < oldSameState.g_cost:
+                self.close.remove_node(oldSameState)
+                self.open.push_node(successor_node)
+            return
+
+        # open group already have the same state,need to replace with the new state
+        if self.open.has_state(successor_node.state):
+            oldSameState = self.open.get_node_by_state(successor_node.state)
+            if oldSameState.g_cost > successor_node.g_cost:
+                self.open.extract_node(oldSameState)
+
+        # push the new state to open list
+        if not self.open.has_state(successor_node.state):
+            self.open.push_node(successor_node)
