@@ -66,9 +66,8 @@ class MapProblem(GraphProblem):
         #        `my_variable_to_check is None`, and particularly do NOT use comparison (==).
 
         for link in junction.outgoing_links:
-            yield OperatorResult(successor_state=MapState(link.target), operator_cost=link.distance)
-
-        # yield OperatorResult(successor_state=MapState(self.target_junction_id), operator_cost=7)  # TODO: remove this line!
+            if link is not None:
+                yield OperatorResult(successor_state=MapState(link.target), operator_cost=link.distance)
 
     def is_goal(self, state: GraphProblemState) -> bool:
         """
