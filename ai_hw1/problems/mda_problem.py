@@ -291,7 +291,7 @@ class MDAProblem(GraphProblem):
                 generated set.
             Note: This method can be implemented using a single line of code. Try to do so.
         """
-        return [apartment for apartment in ((reported for reported in self.problem_input.reported_apartments).difference(state.tests_on_ambulance.union(state.tests_transferred_to_lab)))].sort(key=lambda x: x.report_id)
+        return list(set(self.problem_input.reported_apartments) - (state.tests_on_ambulance | state.tests_transferred_to_lab)).sort(key=lambda x:x.report_id)
 
     def get_all_certain_junctions_in_remaining_ambulance_path(self, state: MDAState) -> List[Junction]:
         """
