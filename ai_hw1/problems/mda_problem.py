@@ -8,7 +8,6 @@ from .map_heuristics import AirDistHeuristic
 from .cached_map_distance_finder import CachedMapDistanceFinder
 from .mda_problem_input import *
 
-
 __all__ = ['MDAState', 'MDACost', 'MDAProblem', 'MDAOptimizationObjective']
 
 
@@ -79,7 +78,17 @@ class MDAState(GraphProblemState):
         #   (using equals `==` operator) because the class `Junction` explicitly
         #   implements the `__eq__()` method. The types `frozenset`, `ApartmentWithSymptomsReport`, `Laboratory`
         #   are also comparable (in the same manner).
-        raise NotImplementedError  # TODO: remove this line.
+
+        return (
+                ((isinstance(self.current_site, Junction) and isinstance(other.current_site, Junction)) or
+                 (isinstance(self.current_site, Laboratory) and isinstance(other.current_site, Laboratory)) or
+                 (isinstance(self.current_site, ApartmentWithSymptomsReport) and isinstance(other.current_site,
+                                                                                            ApartmentWithSymptomsReport)
+                  )) and self.current_site == other.current_site and (
+                        self.tests_on_ambulance == other.tests_on_ambulance and self.tests_transferred_to_lab == other.tests_transferred_to_lab and
+                        self.nr_matoshim_on_ambulance == other.nr_matoshim_on_ambulance and self.visited_labs == other.visited_labs)
+
+        )
 
     def __hash__(self):
         """
@@ -98,9 +107,9 @@ class MDAState(GraphProblemState):
          Notice that this method can be implemented using a single line of code - do so!
          Use python's built-it `sum()` function.
          Notice that `sum()` can receive an *ITERATOR* as argument; That is, you can simply write something like this:
-        >>> sum(<some expression using item> for item in some_collection_of_items)
         """
-        raise NotImplementedError  # TODO: remove this line.
+
+        return sum(item.nr_roommates for item in self.tests_on_ambulance)
 
 
 class MDAOptimizationObjective(Enum):
@@ -282,7 +291,7 @@ class MDAProblem(GraphProblem):
                 generated set.
             Note: This method can be implemented using a single line of code. Try to do so.
         """
-        raise NotImplementedError  # TODO: remove this line!
+        return list(set(self.problem_input.reported_apartments) - (state.tests_on_ambulance | state.tests_transferred_to_lab)).sort(key=lambda x:x.report_id)
 
     def get_all_certain_junctions_in_remaining_ambulance_path(self, state: MDAState) -> List[Junction]:
         """
