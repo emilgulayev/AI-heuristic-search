@@ -168,7 +168,7 @@ class MDACost(ExtendedCost):
 
 class MDAProblem(GraphProblem):
     """
-    An instance of this class represents an MDA problem.
+    An instance of this class represents an MDA.
     """
 
     name = 'MDA'
