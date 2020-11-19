@@ -6,7 +6,6 @@ from framework import *
 from .mda_problem import *
 from .cached_air_distance_calculator import CachedAirDistanceCalculator
 
-
 __all__ = ['MDAMaxAirDistHeuristic', 'MDASumAirDistHeuristic',
            'MDAMSTAirDistHeuristic', 'MDATestsTravelDistToNearestLabHeuristic']
 
@@ -49,7 +48,11 @@ class MDAMaxAirDistHeuristic(HeuristicFunction):
         if len(all_certain_junctions_in_remaining_ambulance_path) < 2:
             return 0
 
-        return 10  # TODO: modify this line.
+        return max(
+            self.cached_air_distance_calculator.get_air_distance_between_junctions(junction1, junction2) for junction1
+            in self.problem.get_all_certain_junctions_in_remaining_ambulance_path(state)
+            for junction2 in self.problem.get_all_certain_junctions_in_remaining_ambulance_path(state) if
+            junction1.index != junction2.index)
 
 
 class MDASumAirDistHeuristic(HeuristicFunction):
