@@ -231,7 +231,8 @@ class MDAProblem(GraphProblem):
             ):
                 mda_apartment_state = MDAState(
                     current_site=possibleAppartment,
-                    tests_on_ambulance=frozenset(state_to_expand.tests_on_ambulance).union(frozenset([possibleAppartment])),
+                    tests_on_ambulance=frozenset(state_to_expand.tests_on_ambulance).union(
+                        frozenset([possibleAppartment])),
                     tests_transferred_to_lab=frozenset(state_to_expand.tests_transferred_to_lab),
                     nr_matoshim_on_ambulance=state_to_expand.nr_matoshim_on_ambulance - possibleAppartment.nr_roommates,
                     visited_labs=frozenset(state_to_expand.visited_labs)
@@ -241,11 +242,12 @@ class MDAProblem(GraphProblem):
                                      operator_name='visit ReporterName {}'.format(possibleAppartment.reporter_name))
 
         for possibleLab in self.problem_input.laboratories:
-            if (possibleLab not in state_to_expand.visited_labs) or len(state_to_expand.tests_on_ambulance)>0:
+            if (possibleLab not in state_to_expand.visited_labs) or len(state_to_expand.tests_on_ambulance) > 0:
                 mda_lab_state = MDAState(
                     current_site=possibleLab,
                     tests_on_ambulance=frozenset(),
-                    tests_transferred_to_lab=frozenset(state_to_expand.tests_transferred_to_lab).union(frozenset(state_to_expand.tests_on_ambulance)),
+                    tests_transferred_to_lab=frozenset(state_to_expand.tests_transferred_to_lab).union(
+                        frozenset(state_to_expand.tests_on_ambulance)),
                     nr_matoshim_on_ambulance=state_to_expand.nr_matoshim_on_ambulance + possibleLab.max_nr_matoshim,
                     visited_labs=frozenset(state_to_expand.visited_labs).union(frozenset([possibleLab]))
                 )
@@ -322,7 +324,8 @@ class MDAProblem(GraphProblem):
                                                           prev_state.tests_on_ambulance))
 
         return MDACost(distance_cost=cost_distance, monetary_cost=cost_monetary,
-                       tests_travel_distance_cost=cost_tests_travel_distance,optimization_objective=self.optimization_objective)
+                       tests_travel_distance_cost=cost_tests_travel_distance,
+                       optimization_objective=self.optimization_objective)
 
     def is_goal(self, state: GraphProblemState) -> bool:
         """
@@ -373,4 +376,5 @@ class MDAProblem(GraphProblem):
             Use the method `self.get_reported_apartments_waiting_to_visit(state)`.
             Use python's `sorted(some_list, key=...)` function.
         """
-        raise NotImplementedError  # TODO: remove this line!
+        return [apartment.location for apartment in self.get_reported_apartments_waiting_to_visit(state)].append(
+            state.current_site.location).sort(lambda x: x.index)
