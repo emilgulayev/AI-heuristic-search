@@ -254,7 +254,31 @@ class MDAProblem(GraphProblem):
                                 its first `k` items and until the `n`-th item.
             You might find this tip useful for summing a slice of a collection.
         """
-        raise NotImplementedError  # TODO: remove this line!
+        cost_distance = self.map_distance_finder.get_map_cost_between(prev_state.current_site.index,
+                                                                      succ_state.current_site.index)
+        cost_distance = float('inf') if None else cost_distance
+
+        cost_monetary = 0
+
+        active_fridges = math.ceil(sum(apartment.nr_roommates for apartment in
+                                       prev_state.tests_on_ambulance) / self.problem_input.ambulance.fridge_capacity)
+
+        fridge_gas_consumption = sum(nr_fridges_cost for nr_fridges_cost in
+                                     self.problem_input.ambulance.fridges_gas_consumption_liter_per_meter[:active_fridges])
+
+        cost_monetary += cost_distance * self.problem_input.gas_liter_price * (
+                self.problem_input.ambulance.drive_gas_consumption_liter_per_meter + fridge_gas_consumption)
+
+        if isinstance(succ_state.current_site, Laboratory):
+            cost_monetary += prev_state.get_total_nr_tests_taken_and_stored_on_ambulance() * succ_state.current_site.tests_transfer_cost
+            if succ_state.current_site in prev_state.visited_labs:
+                cost_monetary += succ_state.current_site.revisit_extra_cost
+
+        cost_tests_travel_distance = cost_distance * (sum(apartment.nr_roommates for apartment in
+                                                          prev_state.tests_on_ambulance))
+
+        return MDACost(distance_cost=cost_distance, monetary_cost=cost_monetary,
+                       tests_travel_distance_cost=cost_tests_travel_distance)
 
     def is_goal(self, state: GraphProblemState) -> bool:
         """
@@ -291,7 +315,8 @@ class MDAProblem(GraphProblem):
                 generated set.
             Note: This method can be implemented using a single line of code. Try to do so.
         """
-        return list(set(self.problem_input.reported_apartments) - (state.tests_on_ambulance | state.tests_transferred_to_lab)).sort(key=lambda x:x.report_id)
+        return list(set(self.problem_input.reported_apartments) - (
+                state.tests_on_ambulance | state.tests_transferred_to_lab)).sort(key=lambda x: x.report_id)
 
     def get_all_certain_junctions_in_remaining_ambulance_path(self, state: MDAState) -> List[Junction]:
         """
