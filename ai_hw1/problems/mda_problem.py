@@ -376,5 +376,5 @@ class MDAProblem(GraphProblem):
             Use the method `self.get_reported_apartments_waiting_to_visit(state)`.
             Use python's `sorted(some_list, key=...)` function.
         """
-        return [apartment.location for apartment in self.get_reported_apartments_waiting_to_visit(state)].append(
-            state.current_site.location).sort(lambda x: x.index)
+        return sorted([apartment.location for apartment in self.get_reported_apartments_waiting_to_visit(state)],
+                      key=lambda x: x.index)
