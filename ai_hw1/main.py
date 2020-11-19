@@ -88,7 +88,6 @@ def run_astar_for_weights_in_range(heuristic_type: HeuristicFunctionType, proble
 
     shuffledWeights = np.linspace(low_heuristic_weight, high_heuristic_weight,num=n)
 
-    print(shuffledWeights)
 
     weightsWithSolution = []
     costsPerWeight = []
@@ -179,11 +178,14 @@ def basic_mda_problem_experiments():
     print('Solve the MDA problem (small input, only distance objective, UniformCost).')
 
     small_mda_problem_with_distance_cost = get_mda_problem('small', MDAOptimizationObjective.Distance)
+    uc= UniformCost()
+    res=uc.solve_problem(small_mda_problem_with_distance_cost)
+    print(res)
 
     # Ex.18
     # TODO: create an instance of `UniformCost`, solve the `small_mda_problem_with_distance_cost`
     #       with it and print the results.
-    exit()  # TODO: remove!
+    # exit()  # TODO: remove!
 
 
 def mda_problem_with_astar_experiments():
@@ -191,7 +193,9 @@ def mda_problem_with_astar_experiments():
     print('Solve the MDA problem (moderate input, only distance objective, A*, '
           'MaxAirDist & SumAirDist & MSTAirDist heuristics).')
 
-    moderate_mda_problem_with_distance_cost = get_mda_problem('moderate', MDAOptimizationObjective.Distance)
+    # moderate_mda_problem_with_distance_cost = get_mda_problem('moderate', MDAOptimizationObjective.Distance)
+    # uc= UniformCost()
+    # res=uc.solve_problem(mo)
 
     # Ex.22
     # TODO: create an instance of `AStar` with the `MDAMaxAirDistHeuristic`,
