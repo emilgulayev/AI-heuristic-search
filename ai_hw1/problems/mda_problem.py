@@ -222,7 +222,63 @@ class MDAProblem(GraphProblem):
         """
 
         assert isinstance(state_to_expand, MDAState)
-        raise NotImplementedError  # TODO: remove this line!
+
+        apartments_indexes=Dict()
+        labortatories_indexes=Dict()
+
+        for apartment in self.problem_input.reported_apartments:
+            apartments_indexes[apartment.location.index]=apartment
+
+        for laboratory in self.problem_input.laboratories:
+             labortatories_indexes[laboratory.location.index] = laboratory
+
+        # cehck if state_to_expand is the initial state aka Junction Type
+        if isinstance(state_to_expand.current_site, Junction):
+            for link in state_to_expand.current_site.outgoing_links:
+                if link is not None:
+                    # target is an apartment
+                    if link.target in apartments_indexes:
+                        new_apartment_object=apartments_indexes[link.target]
+                        mda_apartment_state=MDAState(
+                            current_site=new_apartment_object,
+                            tests_on_ambulance=frozenset(state_to_expand.tests_on_ambulance | new_apartment_object),
+                            tests_transferred_to_lab=frozenset(state_to_expand.tests_transferred_to_lab),
+                            nr_matoshim_on_ambulance=state_to_expand.nr_matoshim_on_ambulance - new_apartment_object.nr_roommates,
+                            visited_labs=frozenset(state_to_expand.visited_labs))
+                        yield  OperatorResult(successor_state=mda_apartment_state,operator_cost=
+                        self.get_operator_cost(state_to_expand,mda_apartment_state),operator_name='')
+                    # target is a laboratory
+                    elif link.target in labortatories_indexes:
+                        new_lab_object=labortatories_indexes[link.target]
+                        mda_lab_state=MDAState(
+                            current_site=new_lab_object,
+                            tests_on_ambulance=frozenset(),
+                            tests_transferred_to_lab=frozenset(state_to_expand.tests_transferred_to_lab | state_to_expand.tests_on_ambulance),
+                            nr_matoshim_on_ambulance=state_to_expand.nr_matoshim_on_ambulance + new_lab_object.max_nr_matoshim,
+                            visited_labs=frozenset(state_to_expand.visited_labs | new_lab_object)
+                        )
+                        yield OperatorResult(successor_state=mda_lab_state, operator_cost=
+                        self.get_operator_cost(state_to_expand, mda_lab_state), operator_name='')
+
+                    #  target is a general junction
+                    else:
+                        new_junction=self.streets_map[link.target]
+                        mda_junction_state=MDAState(
+                            current_site=new_junction,
+                            tests_on_ambulance=frozenset(state_to_expand.tests_on_ambulance),
+                            tests_transferred_to_lab=frozenset(state_to_expand.tests_transferred_to_lab),
+                            nr_matoshim_on_ambulance=state_to_expand.nr_matoshim_on_ambulance,
+                            visited_labs=frozenset(state_to_expand.visited_labs)
+                        )
+                        yield OperatorResult(successor_state=mda_junction_state, operator_cost=
+                        self.get_operator_cost(state_to_expand, mda_junction_state), operator_name='')
+
+
+        # state_to_expand is either Apartment or Laboratory
+        else:
+            for link in state_to_expand.current_site.location.outgoing_links:
+                if link is not None:
+                    # yield OperatorResult(successor_state=MapState(link.target), operator_cost=link.distance)
 
     def get_operator_cost(self, prev_state: MDAState, succ_state: MDAState) -> MDACost:
         """
@@ -254,8 +310,19 @@ class MDAProblem(GraphProblem):
                                 its first `k` items and until the `n`-th item.
             You might find this tip useful for summing a slice of a collection.
         """
-        cost_distance = self.map_distance_finder.get_map_cost_between(prev_state.current_site.index,
-                                                                      succ_state.current_site.index)
+
+
+        if isinstance(prev_state.current_site,Junction):
+            prev_junction_index=prev_state.current_site.index
+        else:
+            prev_junction_index=prev_state.current_site.location.index
+
+        if isinstance(succ_state.current_site,Junction):
+            succ_junction_index = succ_state.current_site.index
+        else:
+            succ_junction_index = succ_state.current_site.location.index
+
+        cost_distance = self.map_distance_finder.get_map_cost_between(prev_junction_index,succ_junction_index)
         cost_distance = float('inf') if None else cost_distance
 
         cost_monetary = 0
@@ -264,7 +331,8 @@ class MDAProblem(GraphProblem):
                                        prev_state.tests_on_ambulance) / self.problem_input.ambulance.fridge_capacity)
 
         fridge_gas_consumption = sum(nr_fridges_cost for nr_fridges_cost in
-                                     self.problem_input.ambulance.fridges_gas_consumption_liter_per_meter[:active_fridges])
+                                     self.problem_input.ambulance.fridges_gas_consumption_liter_per_meter[
+                                     :active_fridges])
 
         cost_monetary += cost_distance * self.problem_input.gas_liter_price * (
                 self.problem_input.ambulance.drive_gas_consumption_liter_per_meter + fridge_gas_consumption)
@@ -288,7 +356,7 @@ class MDAProblem(GraphProblem):
          In order to create a set from some other collection (list/tuple) you can just `set(some_other_collection)`.
         """
         assert isinstance(state, MDAState)
-        raise NotImplementedError  # TODO: remove the line!
+        return self.get_reported_apartments_waiting_to_visit().len == 0 and isinstance(state.current_site, Laboratory)
 
     def get_zero_cost(self) -> Cost:
         """
