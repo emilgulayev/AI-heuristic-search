@@ -46,9 +46,6 @@ class CachedMapDistanceFinder:
         The cache key should include the source & target indices.
         """
 
-        print("src jun", src_junction)
-        print("tgt jun", tgt_junction)
-
         if self._is_in_cache(key=(src_junction.index, tgt_junction.index)):
             return self._get_from_cache((src_junction.index, tgt_junction.index))
 

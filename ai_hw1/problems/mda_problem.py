@@ -223,137 +223,35 @@ class MDAProblem(GraphProblem):
 
         assert isinstance(state_to_expand, MDAState)
 
-        apartments_indexes = dict()
-        labortatories_indexes = dict()
+        for possibleAppartment in self.get_reported_apartments_waiting_to_visit(state_to_expand):
+            if possibleAppartment.nr_roommates <= state_to_expand.nr_matoshim_on_ambulance and (
+                    possibleAppartment.nr_roommates <= (
+                    self.problem_input.ambulance.fridge_capacity * self.problem_input.ambulance.nr_fridges -
+                    sum(apartment.nr_roommates for apartment in state_to_expand.tests_on_ambulance))
+            ):
+                mda_apartment_state = MDAState(
+                    current_site=possibleAppartment,
+                    tests_on_ambulance=frozenset(state_to_expand.tests_on_ambulance).union(frozenset([possibleAppartment])),
+                    tests_transferred_to_lab=frozenset(state_to_expand.tests_transferred_to_lab),
+                    nr_matoshim_on_ambulance=state_to_expand.nr_matoshim_on_ambulance - possibleAppartment.nr_roommates,
+                    visited_labs=frozenset(state_to_expand.visited_labs)
+                )
+                yield OperatorResult(successor_state=mda_apartment_state, operator_cost=
+                self.get_operator_cost(prev_state=state_to_expand, succ_state=mda_apartment_state),
+                                     operator_name='visit ReporterName {}'.format(possibleAppartment.reporter_name))
 
-        for apartment in self.problem_input.reported_apartments:
-            apartments_indexes[apartment.location.index] = apartment
-
-        for laboratory in self.problem_input.laboratories:
-            labortatories_indexes[laboratory.location.index] = laboratory
-
-        # cehck if state_to_expand is the initial state aka Junction Type
-        if isinstance(state_to_expand.current_site, Junction):
-            for link in state_to_expand.current_site.outgoing_links:
-                if link is not None:
-                    # target is an apartment
-                    if link.target in apartments_indexes:
-                        new_apartment_object = apartments_indexes[link.target]
-                        mda_apartment_state = MDAState(
-                            current_site=new_apartment_object,
-                            tests_on_ambulance=frozenset(state_to_expand.tests_on_ambulance | new_apartment_object),
-                            tests_transferred_to_lab=frozenset(state_to_expand.tests_transferred_to_lab),
-                            nr_matoshim_on_ambulance=state_to_expand.nr_matoshim_on_ambulance - new_apartment_object.nr_roommates,
-                            visited_labs=frozenset(state_to_expand.visited_labs))
-                        yield OperatorResult(successor_state=mda_apartment_state, operator_cost=
-                        self.get_operator_cost(state_to_expand, mda_apartment_state), operator_name='')
-                    # target is a laboratory
-                    elif link.target in labortatories_indexes:
-                        new_lab_object = labortatories_indexes[link.target]
-                        mda_lab_state = MDAState(
-                            current_site=new_lab_object,
-                            tests_on_ambulance=frozenset(),
-                            tests_transferred_to_lab=frozenset(
-                                state_to_expand.tests_transferred_to_lab | state_to_expand.tests_on_ambulance),
-                            nr_matoshim_on_ambulance=state_to_expand.nr_matoshim_on_ambulance + new_lab_object.max_nr_matoshim,
-                            visited_labs=frozenset(state_to_expand.visited_labs | new_lab_object)
-                        )
-                        yield OperatorResult(successor_state=mda_lab_state, operator_cost=
-                        self.get_operator_cost(state_to_expand, mda_lab_state), operator_name='')
-                    #  target is a general junction
-                    else:
-                        new_junction = self.streets_map[link.target]
-                        mda_junction_state = MDAState(
-                            current_site=new_junction,
-                            tests_on_ambulance=frozenset(state_to_expand.tests_on_ambulance),
-                            tests_transferred_to_lab=frozenset(state_to_expand.tests_transferred_to_lab),
-                            nr_matoshim_on_ambulance=state_to_expand.nr_matoshim_on_ambulance,
-                            visited_labs=frozenset(state_to_expand.visited_labs)
-                        )
-                        yield OperatorResult(successor_state=mda_junction_state, operator_cost=
-                        self.get_operator_cost(prev_state=state_to_expand, succ_state=mda_junction_state), operator_name='')
-
-
-        # state_to_expand is an Apartment
-        elif isinstance(state_to_expand.current_site, ApartmentWithSymptomsReport):
-            for link in state_to_expand.current_site.location.outgoing_links:
-                if link is not None:
-                    # target is an apartment
-                    if link.target in apartments_indexes:
-                        new_apartment_object = apartments_indexes[link.target]
-                        mda_apartment_state = MDAState(
-                            current_site=new_apartment_object,
-                            tests_on_ambulance=frozenset(state_to_expand.tests_on_ambulance | new_apartment_object),
-                            tests_transferred_to_lab=frozenset(state_to_expand.tests_transferred_to_lab),
-                            nr_matoshim_on_ambulance=state_to_expand.nr_matoshim_on_ambulance - new_apartment_object.nr_roommates,
-                            visited_labs=frozenset(state_to_expand.visited_labs))
-                        yield OperatorResult(successor_state=mda_apartment_state, operator_cost=
-                        self.get_operator_cost(state_to_expand, mda_apartment_state), operator_name='')
-                    # target is a laboratory
-                    elif link.target in labortatories_indexes:
-                        new_lab_object = labortatories_indexes[link.target]
-                        mda_lab_state = MDAState(
-                            current_site=new_lab_object,
-                            tests_on_ambulance=frozenset(),
-                            tests_transferred_to_lab=frozenset(
-                                state_to_expand.tests_transferred_to_lab | state_to_expand.tests_on_ambulance),
-                            nr_matoshim_on_ambulance=state_to_expand.nr_matoshim_on_ambulance + new_lab_object.max_nr_matoshim,
-                            visited_labs=frozenset(state_to_expand.visited_labs | new_lab_object)
-                        )
-                        yield OperatorResult(successor_state=mda_lab_state, operator_cost=
-                        self.get_operator_cost(state_to_expand, mda_lab_state), operator_name='')
-                    #  target is a general junction
-                    else:
-                        new_junction = self.streets_map[link.target]
-                        mda_junction_state = MDAState(
-                            current_site=new_junction,
-                            tests_on_ambulance=frozenset(state_to_expand.tests_on_ambulance),
-                            tests_transferred_to_lab=frozenset(state_to_expand.tests_transferred_to_lab),
-                            nr_matoshim_on_ambulance=state_to_expand.nr_matoshim_on_ambulance,
-                            visited_labs=frozenset(state_to_expand.visited_labs)
-                        )
-                        yield OperatorResult(successor_state=mda_junction_state, operator_cost=
-                        self.get_operator_cost(state_to_expand, mda_junction_state), operator_name='')
-        # state_to_expand is a Laboratory
-        else:
-            for link in state_to_expand.current_site.location.outgoing_links:
-                if link is not None:
-                    # target is an apartment
-                    if link.target in apartments_indexes:
-                        new_apartment_object = apartments_indexes[link.target]
-                        mda_apartment_state = MDAState(
-                            current_site=new_apartment_object,
-                            tests_on_ambulance=frozenset(new_apartment_object),
-                            tests_transferred_to_lab=frozenset(state_to_expand.tests_transferred_to_lab),
-                            nr_matoshim_on_ambulance=state_to_expand.nr_matoshim_on_ambulance - new_apartment_object.nr_roommates,
-                            visited_labs=frozenset(state_to_expand.visited_labs))
-                        yield OperatorResult(successor_state=mda_apartment_state, operator_cost=
-                        self.get_operator_cost(state_to_expand.current_site.location, mda_apartment_state.current_site.location), operator_name='')
-                    # target is a laboratory
-                    elif link.target in labortatories_indexes:
-                        new_lab_object = labortatories_indexes[link.target]
-                        mda_lab_state = MDAState(
-                            current_site=new_lab_object,
-                            tests_on_ambulance=frozenset(),
-                            tests_transferred_to_lab=frozenset(
-                                state_to_expand.tests_transferred_to_lab),
-                            nr_matoshim_on_ambulance=state_to_expand.nr_matoshim_on_ambulance + new_lab_object.max_nr_matoshim,
-                            visited_labs=frozenset(state_to_expand.visited_labs | new_lab_object)
-                        )
-                        yield OperatorResult(successor_state=mda_lab_state, operator_cost=
-                        self.get_operator_cost(state_to_expand.current_site.location, mda_lab_state.current_site.location), operator_name='')
-                    #  target is a general junction
-                    else:
-                        new_junction = self.streets_map[link.target]
-                        mda_junction_state = MDAState(
-                            current_site=new_junction,
-                            tests_on_ambulance=frozenset(),
-                            tests_transferred_to_lab=frozenset(state_to_expand.tests_transferred_to_lab),
-                            nr_matoshim_on_ambulance=state_to_expand.nr_matoshim_on_ambulance,
-                            visited_labs=frozenset(state_to_expand.visited_labs)
-                        )
-                        yield OperatorResult(successor_state=mda_junction_state, operator_cost=
-                        self.get_operator_cost(state_to_expand, mda_junction_state), operator_name='')
+        for possibleLab in self.problem_input.laboratories:
+            if (possibleLab not in state_to_expand.visited_labs) or len(state_to_expand.tests_on_ambulance)>0:
+                mda_lab_state = MDAState(
+                    current_site=possibleLab,
+                    tests_on_ambulance=frozenset(),
+                    tests_transferred_to_lab=frozenset(state_to_expand.tests_transferred_to_lab).union(frozenset(state_to_expand.tests_on_ambulance)),
+                    nr_matoshim_on_ambulance=state_to_expand.nr_matoshim_on_ambulance + possibleLab.max_nr_matoshim,
+                    visited_labs=frozenset(state_to_expand.visited_labs).union(frozenset([possibleLab]))
+                )
+                yield OperatorResult(successor_state=mda_lab_state, operator_cost=
+                self.get_operator_cost(prev_state=state_to_expand, succ_state=mda_lab_state),
+                                     operator_name='go to lab LabName {}'.format(possibleLab.name))
 
     def get_operator_cost(self, prev_state: MDAState, succ_state: MDAState) -> MDACost:
         """
@@ -388,10 +286,10 @@ class MDAProblem(GraphProblem):
 
         if isinstance(prev_state.current_site, Junction):
             # prev_junction_index = prev_state.current_site.index
-            prev_junction=prev_state.current_site
+            prev_junction = prev_state.current_site
         else:
             # prev_junction_index = prev_state.current_site.location.index
-            prev_junction=prev_state.current_site
+            prev_junction = prev_state.current_site.location
 
         if isinstance(succ_state.current_site, Junction):
             # succ_junction_index = succ_state.current_site.index
@@ -424,7 +322,7 @@ class MDAProblem(GraphProblem):
                                                           prev_state.tests_on_ambulance))
 
         return MDACost(distance_cost=cost_distance, monetary_cost=cost_monetary,
-                       tests_travel_distance_cost=cost_tests_travel_distance)
+                       tests_travel_distance_cost=cost_tests_travel_distance,optimization_objective=self.optimization_objective)
 
     def is_goal(self, state: GraphProblemState) -> bool:
         """
@@ -434,7 +332,8 @@ class MDAProblem(GraphProblem):
          In order to create a set from some other collection (list/tuple) you can just `set(some_other_collection)`.
         """
         assert isinstance(state, MDAState)
-        return len(self.get_reported_apartments_waiting_to_visit(state)) == 0 and isinstance(state.current_site, Laboratory)
+        return len(self.get_reported_apartments_waiting_to_visit(state)) == 0 and isinstance(state.current_site,
+                                                                                             Laboratory)
 
     def get_zero_cost(self) -> Cost:
         """

@@ -88,7 +88,6 @@ def run_astar_for_weights_in_range(heuristic_type: HeuristicFunctionType, proble
 
     shuffledWeights = np.linspace(low_heuristic_weight, high_heuristic_weight,num=n)
 
-    print(shuffledWeights)
 
     weightsWithSolution = []
     costsPerWeight = []
