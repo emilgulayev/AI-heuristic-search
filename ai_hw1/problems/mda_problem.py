@@ -80,14 +80,15 @@ class MDAState(GraphProblemState):
         #   are also comparable (in the same manner).
 
         return (
-                ((isinstance(self.current_site, Junction) and isinstance(other.current_site, Junction)) or
-                 (isinstance(self.current_site, Laboratory) and isinstance(other.current_site, Laboratory)) or
-                 (isinstance(self.current_site, ApartmentWithSymptomsReport) and isinstance(other.current_site,
-                                                                                            ApartmentWithSymptomsReport)
-                  )) and self.current_site == other.current_site and (
-                        self.tests_on_ambulance == other.tests_on_ambulance and self.tests_transferred_to_lab == other.tests_transferred_to_lab and
-                        self.nr_matoshim_on_ambulance == other.nr_matoshim_on_ambulance and self.visited_labs == other.visited_labs)
-
+            # ((isinstance(self.current_site, Junction) and isinstance(other.current_site, Junction)) or
+            # (isinstance(self.current_site, Laboratory) and isinstance(other.current_site, Laboratory)) or
+            # (isinstance(self.current_site, ApartmentWithSymptomsReport) and isinstance(other.current_site,
+            # ApartmentWithSymptomsReport))) and    # maybe uncomment later
+                self.current_site == other.current_site and
+                self.tests_on_ambulance == other.tests_on_ambulance and
+                self.tests_transferred_to_lab == other.tests_transferred_to_lab and
+                self.nr_matoshim_on_ambulance == other.nr_matoshim_on_ambulance and
+                self.visited_labs == other.visited_labs
         )
 
     def __hash__(self):
@@ -108,7 +109,8 @@ class MDAState(GraphProblemState):
          Use python's built-it `sum()` function.
          Notice that `sum()` can receive an *ITERATOR* as argument; That is, you can simply write something like this:
         """
-
+        # print('test on ambulace: ', self.tests_on_ambulance, '\ntests transfered: ', self.tests_transferred_to_lab)
+        # print('the sum of tests: ', sum(item.nr_roommates for item in self.tests_on_ambulance))
         return sum(item.nr_roommates for item in self.tests_on_ambulance)
 
 
@@ -335,8 +337,9 @@ class MDAProblem(GraphProblem):
          In order to create a set from some other collection (list/tuple) you can just `set(some_other_collection)`.
         """
         assert isinstance(state, MDAState)
-        return len(self.get_reported_apartments_waiting_to_visit(state)) == 0 and isinstance(state.current_site,
-                                                                                             Laboratory)
+
+        return isinstance(state.current_site, Laboratory) and \
+               len(self.get_reported_apartments_waiting_to_visit(state)) == 0
 
     def get_zero_cost(self) -> Cost:
         """
@@ -363,8 +366,21 @@ class MDAProblem(GraphProblem):
                 generated set.
             Note: This method can be implemented using a single line of code. Try to do so.
         """
-        return list(set(self.problem_input.reported_apartments) - (
-                state.tests_on_ambulance | state.tests_transferred_to_lab))
+        '''
+        print(list(set(self.problem_input.reported_apartments)))
+        print('\nNew loop:')
+        print('REPORTED:', type(set(self.problem_input.reported_apartments)))
+        print(set(self.problem_input.reported_apartments))
+        print('TRANSFERRED:', type(set(state.tests_transferred_to_lab)))
+        print(set(state.tests_transferred_to_lab))
+        print('AMBULANCE:', type(set(state.tests_on_ambulance)))
+        print(set(state.tests_on_ambulance))
+        '''
+
+        apartment_to_visit = list(set(self.problem_input.reported_apartments) -
+                                  (set(state.tests_on_ambulance) | set(state.tests_transferred_to_lab)))
+        apartment_to_visit.sort(key=lambda a: a.report_id)
+        return apartment_to_visit
 
     def get_all_certain_junctions_in_remaining_ambulance_path(self, state: MDAState) -> List[Junction]:
         """
