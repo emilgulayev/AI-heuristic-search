@@ -311,7 +311,8 @@ class MDAProblem(GraphProblem):
         active_fridges = math.ceil(sum(apartment.nr_roommates for apartment in
                                        prev_state.tests_on_ambulance) / self.problem_input.ambulance.fridge_capacity)
         fridge_gas_consumption = sum(nr_fridges_cost for nr_fridges_cost in
-                                     self.problem_input.ambulance.fridges_gas_consumption_liter_per_meter[:active_fridges])
+                                     self.problem_input.ambulance.fridges_gas_consumption_liter_per_meter[
+                                     :active_fridges])
 
         cost_monetary = 0
         cost_monetary += distance * self.problem_input.gas_liter_price * \
@@ -324,7 +325,7 @@ class MDAProblem(GraphProblem):
                 cost_monetary += succ_state.current_site.revisit_extra_cost
         tests_on_ambulance = (sum(apartment.nr_roommates for apartment in prev_state.tests_on_ambulance))
         cost_tests_travel_distance = distance * tests_on_ambulance
-        #print('for distance:',distance, 'with:', tests_on_ambulance, 'tests.\n',cost_distance,cost_monetary,cost_tests_travel_distance)
+        # print('for distance:',distance, 'with:', tests_on_ambulance, 'tests.\n',cost_distance,cost_monetary,cost_tests_travel_distance)
 
         return MDACost(distance_cost=cost_distance, monetary_cost=cost_monetary,
                        tests_travel_distance_cost=cost_tests_travel_distance,
@@ -393,7 +394,9 @@ class MDAProblem(GraphProblem):
             Use the method `self.get_reported_apartments_waiting_to_visit(state)`.
             Use python's `sorted(some_list, key=...)` function.
         """
+        apartmentsToReturn = [apartment.location for apartment in self.get_reported_apartments_waiting_to_visit(state)]
+        isinstance(state.current_site, ApartmentWithSymptomsReport) and apartmentsToReturn.append(
+            state.current_site.location)
 
-        return sorted([apartment.location for apartment in self.get_reported_apartments_waiting_to_visit(state)],
+        return sorted(apartmentsToReturn,
                       key=lambda x: x.index)
-
