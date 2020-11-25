@@ -145,7 +145,7 @@ def toy_map_problem_experiments():
     #  3. Call here the function `run_astar_for_weights_in_range()`
     #     with `AirDistHeuristic` and `toy_map_problem`.
 
-    run_astar_for_weights_in_range(AirDistHeuristic,toy_map_problem)
+    run_astar_for_weights_in_range(AirDistHeuristic, toy_map_problem)
 
 
 # --------------------------------------------------------------------
@@ -177,15 +177,18 @@ def basic_mda_problem_experiments():
     print()
     print('Solve the MDA problem (small input, only distance objective, UniformCost).')
 
+    # Ex.18
+    # TODO: create an instance of `UniformCost`, solve the `small_mda_problem_with_distance_cost`
+    #       with it and print the results.
+
     small_mda_problem_with_distance_cost = get_mda_problem('small', MDAOptimizationObjective.Distance)
     uc= UniformCost()
     res=uc.solve_problem(small_mda_problem_with_distance_cost)
     print(res)
-
-    # Ex.18
-    # TODO: create an instance of `UniformCost`, solve the `small_mda_problem_with_distance_cost`
-    #       with it and print the results.
     # exit()  # TODO: remove!
+
+
+
 
 
 def mda_problem_with_astar_experiments():
@@ -332,6 +335,7 @@ def run_all_experiments():
     mda_problem_with_astar_experiments()
     mda_problem_with_weighted_astar_experiments()
     monetary_cost_objectives_mda_problem_experiments()
+    exit()
     multiple_objectives_mda_problem_experiments()
     mda_problem_with_astar_epsilon_experiments()
     mda_problem_anytime_astar_experiments()

@@ -216,7 +216,7 @@ class MDAProblem(GraphProblem):
             - The field `self.problem_input.ambulance.total_fridges_capacity`.
             - The method `self.get_reported_apartments_waiting_to_visit()` here.
             - The method `self.get_operator_cost()`.
-            - The c'tor for `AmbulanceState` to create the new successor state.
+            - The c'tor for `MDAState` to create the new successor state.
             - Python's built-in method `frozenset()` to create a new frozen set (for fields that
               expect this type) from another collection (set/list/tuple/iterator).
             - Other fields of the state and the problem input.
@@ -228,9 +228,8 @@ class MDAProblem(GraphProblem):
         for possibleAppartment in self.get_reported_apartments_waiting_to_visit(state_to_expand):
             if possibleAppartment.nr_roommates <= state_to_expand.nr_matoshim_on_ambulance and (
                     possibleAppartment.nr_roommates <= (
-                    self.problem_input.ambulance.fridge_capacity * self.problem_input.ambulance.nr_fridges -
-                    sum(apartment.nr_roommates for apartment in state_to_expand.tests_on_ambulance))
-            ):
+                    self.problem_input.ambulance.total_fridges_capacity -
+                    sum(apartment.nr_roommates for apartment in state_to_expand.tests_on_ambulance))):
                 mda_apartment_state = MDAState(
                     current_site=possibleAppartment,
                     tests_on_ambulance=frozenset(state_to_expand.tests_on_ambulance).union(
@@ -244,13 +243,15 @@ class MDAProblem(GraphProblem):
                                      operator_name='visit ReporterName {}'.format(possibleAppartment.reporter_name))
 
         for possibleLab in self.problem_input.laboratories:
+            lab_not_visited = possibleLab not in state_to_expand.visited_labs
             if (possibleLab not in state_to_expand.visited_labs) or len(state_to_expand.tests_on_ambulance) > 0:
                 mda_lab_state = MDAState(
                     current_site=possibleLab,
                     tests_on_ambulance=frozenset(),
                     tests_transferred_to_lab=frozenset(state_to_expand.tests_transferred_to_lab).union(
                         frozenset(state_to_expand.tests_on_ambulance)),
-                    nr_matoshim_on_ambulance=state_to_expand.nr_matoshim_on_ambulance + possibleLab.max_nr_matoshim,
+                    nr_matoshim_on_ambulance=state_to_expand.nr_matoshim_on_ambulance +
+                                             possibleLab.max_nr_matoshim * lab_not_visited,
                     visited_labs=frozenset(state_to_expand.visited_labs).union(frozenset([possibleLab]))
                 )
                 yield OperatorResult(successor_state=mda_lab_state, operator_cost=
@@ -302,28 +303,28 @@ class MDAProblem(GraphProblem):
             # succ_junction_index = succ_state.current_site.location.index
             succ_junction = succ_state.current_site.location
 
-        cost_distance = self.map_distance_finder.get_map_cost_between(prev_junction, succ_junction)
-        cost_distance = float('inf') if None else cost_distance
-
-        cost_monetary = 0
+        distance = self.map_distance_finder.get_map_cost_between(prev_junction, succ_junction)
+        if distance is None:
+            distance = float('inf')
+        cost_distance = distance
 
         active_fridges = math.ceil(sum(apartment.nr_roommates for apartment in
                                        prev_state.tests_on_ambulance) / self.problem_input.ambulance.fridge_capacity)
-
         fridge_gas_consumption = sum(nr_fridges_cost for nr_fridges_cost in
-                                     self.problem_input.ambulance.fridges_gas_consumption_liter_per_meter[
-                                     :active_fridges])
+                                     self.problem_input.ambulance.fridges_gas_consumption_liter_per_meter[:active_fridges])
 
-        cost_monetary += cost_distance * self.problem_input.gas_liter_price * (
-                self.problem_input.ambulance.drive_gas_consumption_liter_per_meter + fridge_gas_consumption)
+        cost_monetary = 0
+        cost_monetary += distance * self.problem_input.gas_liter_price * \
+                         (self.problem_input.ambulance.drive_gas_consumption_liter_per_meter + fridge_gas_consumption)
 
         if isinstance(succ_state.current_site, Laboratory):
-            cost_monetary += prev_state.get_total_nr_tests_taken_and_stored_on_ambulance() * succ_state.current_site.tests_transfer_cost
+            test_cost = succ_state.current_site.tests_transfer_cost
+            cost_monetary += prev_state.get_total_nr_tests_taken_and_stored_on_ambulance() * test_cost
             if succ_state.current_site in prev_state.visited_labs:
                 cost_monetary += succ_state.current_site.revisit_extra_cost
-
-        cost_tests_travel_distance = cost_distance * (sum(apartment.nr_roommates for apartment in
-                                                          prev_state.tests_on_ambulance))
+        tests_on_ambulance = (sum(apartment.nr_roommates for apartment in prev_state.tests_on_ambulance))
+        cost_tests_travel_distance = distance * tests_on_ambulance
+        #print('for distance:',distance, 'with:', tests_on_ambulance, 'tests.\n',cost_distance,cost_monetary,cost_tests_travel_distance)
 
         return MDACost(distance_cost=cost_distance, monetary_cost=cost_monetary,
                        tests_travel_distance_cost=cost_tests_travel_distance,
@@ -392,4 +393,5 @@ class MDAProblem(GraphProblem):
             Use the method `self.get_reported_apartments_waiting_to_visit(state)`.
             Use python's `sorted(some_list, key=...)` function.
         """
-        return sorted([apartment.location for apartment in self.get_reported_apartments_waiting_to_visit(state)],key=lambda x: x.index)
+        return sorted([apartment.location for apartment in self.get_reported_apartments_waiting_to_visit(state)],
+                      key=lambda x: x.index)
