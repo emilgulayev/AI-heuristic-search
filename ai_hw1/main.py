@@ -39,7 +39,8 @@ def plot_distance_and_expanded_wrt_weight_figure(
     # https://matplotlib.org/api/_as_gen/matplotlib.axes.Axes.plot.html
     # You can also Google for additional examples.
 
-    p1, = ax1.plot(weights,total_cost,label='Solution cost',color='b',linestyle="solid")  # TODO: pass the relevant params instead of `...`.
+    p1, = ax1.plot(weights, total_cost, label='Solution cost', color='b',
+                   linestyle="solid")  # TODO: pass the relevant params instead of `...`.
 
     # ax1: Make the y-axis label, ticks and tick labels match the line color.
     ax1.set_ylabel('Solution cost', color='b')
@@ -53,7 +54,8 @@ def plot_distance_and_expanded_wrt_weight_figure(
     # TODO: Make this curve colored red with solid line style.
     # TODO: Set its label to be '#Expanded states'.
 
-    p2, = ax2.plot(weights,total_nr_expanded,label='#Expanded states',color='r',linestyle="solid")  # TODO: pass the relevant params instead of `...`.
+    p2, = ax2.plot(weights, total_nr_expanded, label='#Expanded states', color='r',
+                   linestyle="solid")  # TODO: pass the relevant params instead of `...`.
 
     # ax2: Make the y-axis label, ticks and tick labels match the line color.
     ax2.set_ylabel('#Expanded states', color='r')
@@ -86,8 +88,7 @@ def run_astar_for_weights_in_range(heuristic_type: HeuristicFunctionType, proble
     #  3. Call the function `plot_distance_and_expanded_wrt_weight_figure()`
     #     with these 3 generated lists.
 
-    shuffledWeights = np.linspace(low_heuristic_weight, high_heuristic_weight,num=n)
-
+    shuffledWeights = np.linspace(low_heuristic_weight, high_heuristic_weight, num=n)
 
     weightsWithSolution = []
     costsPerWeight = []
@@ -101,7 +102,8 @@ def run_astar_for_weights_in_range(heuristic_type: HeuristicFunctionType, proble
             costsPerWeight.append(res.solution_g_cost)
             expandedNodesPerWeight.append(res.nr_expanded_states)
 
-    plot_distance_and_expanded_wrt_weight_figure(problem.name, weightsWithSolution, costsPerWeight, expandedNodesPerWeight)
+    plot_distance_and_expanded_wrt_weight_figure(problem.name, weightsWithSolution, costsPerWeight,
+                                                 expandedNodesPerWeight)
 
 
 # --------------------------------------------------------------------
@@ -182,13 +184,10 @@ def basic_mda_problem_experiments():
     #       with it and print the results.
 
     small_mda_problem_with_distance_cost = get_mda_problem('small', MDAOptimizationObjective.Distance)
-    uc= UniformCost()
-    res=uc.solve_problem(small_mda_problem_with_distance_cost)
+    uc = UniformCost()
+    res = uc.solve_problem(small_mda_problem_with_distance_cost)
     print(res)
     # exit()  # TODO: remove!
-
-
-
 
 
 def mda_problem_with_astar_experiments():
@@ -196,29 +195,33 @@ def mda_problem_with_astar_experiments():
     print('Solve the MDA problem (moderate input, only distance objective, A*, '
           'MaxAirDist & SumAirDist & MSTAirDist heuristics).')
 
-    astar=AStar(MDAMaxAirDistHeuristic)
+    astar = AStar(MDAMaxAirDistHeuristic)
     moderate_mda_problem_with_distance_cost = get_mda_problem('moderate', MDAOptimizationObjective.Distance)
-    res=astar.solve_problem(moderate_mda_problem_with_distance_cost)
+    res = astar.solve_problem(moderate_mda_problem_with_distance_cost)
     print(res)
 
-    astar2=AStar(MDASumAirDistHeuristic)
-    res=astar2.solve_problem(moderate_mda_problem_with_distance_cost)
+    astar2 = AStar(MDASumAirDistHeuristic)
+    res = astar2.solve_problem(moderate_mda_problem_with_distance_cost)
+    print(res)
+
+    astar3 = AStar(MDAMSTAirDistHeuristic)
+    res = astar3.solve_problem(moderate_mda_problem_with_distance_cost)
     print(res)
 
     # Ex.22
     # TODO: create an instance of `AStar` with the `MDAMaxAirDistHeuristic`,
     #       solve the `moderate_mda_problem_with_distance_cost` with it and print the results.
-    exit()  # TODO: remove!
+
 
     # Ex.25
     # TODO: create an instance of `AStar` with the `MDASumAirDistHeuristic`,
     #       solve the `moderate_mda_problem_with_distance_cost` with it and print the results.
-    exit()  # TODO: remove!
+
 
     # Ex.28
     # TODO: create an instance of `AStar` with the `MDAMSTAirDistHeuristic`,
     #       solve the `moderate_mda_problem_with_distance_cost` with it and print the results.
-    exit()  # TODO: remove!
+
 
 
 def mda_problem_with_weighted_astar_experiments():
@@ -227,6 +230,9 @@ def mda_problem_with_weighted_astar_experiments():
 
     small_mda_problem_with_distance_cost = get_mda_problem('small', MDAOptimizationObjective.Distance)
     moderate_mda_problem_with_distance_cost = get_mda_problem('moderate', MDAOptimizationObjective.Distance)
+
+    # run_astar_for_weights_in_range(MDAMSTAirDistHeuristic, small_mda_problem_with_distance_cost)
+    run_astar_for_weights_in_range(MDASumAirDistHeuristic, moderate_mda_problem_with_distance_cost)
 
     # Ex.30
     # TODO: Call here the function `run_astar_for_weights_in_range()`
