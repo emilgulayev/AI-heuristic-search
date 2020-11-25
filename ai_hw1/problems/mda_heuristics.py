@@ -92,23 +92,27 @@ class MDASumAirDistHeuristic(HeuristicFunction):
         all_certain_junctions_in_remaining_ambulance_path = \
             self.problem.get_all_certain_junctions_in_remaining_ambulance_path(state)
 
+        all_certain_junctions_in_remaining_ambulance_path = set(all_certain_junctions_in_remaining_ambulance_path)
         if len(all_certain_junctions_in_remaining_ambulance_path) < 2:
             return 0
         # first junction in the minimal path is the current site- take out
         all_certain_junctions_in_remaining_ambulance_path.discard(state.current_site)
-        currentJunction = state.current_site.location
+        if isinstance(state.current_site, Junction):
+            currentJunction = state.current_site
+        else:
+            currentJunction = state.current_site.location
 
         minPathDistance = 0
 
         while len(all_certain_junctions_in_remaining_ambulance_path) > 0:
             distancesFromCurrentJunction = [(self.cached_air_distance_calculator.get_air_distance_between_junctions(
-                currentJunction, apartment.location), apartment)
-                for apartment in all_certain_junctions_in_remaining_ambulance_path]
+                currentJunction,junction), junction)
+                for junction in all_certain_junctions_in_remaining_ambulance_path]
             # sort by distance then by index
-            sorted(distancesFromCurrentJunction, key=lambda x: (x[0], -x[1].location.index))
+            sorted(distancesFromCurrentJunction, key=lambda x: (x[0], -x[1].index))
 
             minPathDistance += distancesFromCurrentJunction[0][0]
-            currentJunction=distancesFromCurrentJunction[0][1]
+            currentJunction = distancesFromCurrentJunction[0][1]
             all_certain_junctions_in_remaining_ambulance_path.discard(distancesFromCurrentJunction[0][1])
 
         return minPathDistance
