@@ -159,9 +159,11 @@ class MDAMSTAirDistHeuristic(HeuristicFunction):
 
         for junction1 in junctions:
             for junction2 in junctions:
-                junction1 != junction2 and junctionsGraph.add_edge(junction1, junction2,
+                junction1 != junction2 and junctionsGraph.add_edge(junction1,
+                                                                   junction2,
                                                                    weight=self.cached_air_distance_calculator.get_air_distance_between_junctions(
-                                                                       junction1, junction2))
+                                                                       junction1,
+                                                                       junction2))
 
         return nx.tree.minimum_spanning_tree(junctionsGraph).size(weight='weight')
 
