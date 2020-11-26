@@ -259,12 +259,10 @@ def monetary_cost_objectives_mda_problem_experiments():
     # Ex.32
     # TODO: create an instance of `UniformCost`
     #       solve the `small_mda_problem_with_monetary_cost` with it and print the results.
-    exit()  # TODO: remove!
 
     # Ex.32
     # TODO: create an instance of `UniformCost`
     #       solve the `moderate_mda_problem_with_monetary_cost` with it and print the results.
-    exit()  # TODO: remove!
 
 
 def multiple_objectives_mda_problem_experiments():
@@ -274,6 +272,22 @@ def multiple_objectives_mda_problem_experiments():
     moderate_mda_problem_with_distance_cost = get_mda_problem('moderate', MDAOptimizationObjective.Distance)
     moderate_mda_problem_with_tests_travel_dist_cost = get_mda_problem('moderate',
                                                                        MDAOptimizationObjective.TestsTravelDistance)
+
+    # astar1 = AStar(MDAMaxAirDistHeuristic)
+    astar2 = AStar(MDATestsTravelDistToNearestLabHeuristic)
+    # res = astar1.solve_problem(moderate_mda_problem_with_distance_cost)
+    # print(res)
+    res = astar2.solve_problem(moderate_mda_problem_with_tests_travel_dist_cost)
+    print(res)
+
+    astar38=AStar(MDAMSTAirDistHeuristic)
+    optimal_distance_cost=astar38.solve_problem(moderate_mda_problem_with_distance_cost).solution_g_cost
+    print("optimal distance cost")
+    print(optimal_distance_cost)
+    max_distance_cost=1.6* optimal_distance_cost
+    astar_nearest_lab=AStar(MDATestsTravelDistToNearestLabHeuristic,open_criterion=lambda searchNode:searchNode.cost.distance_cost<=max_distance_cost)
+    res=astar_nearest_lab.solve_problem(moderate_mda_problem_with_tests_travel_dist_cost)
+    print(res)
 
     # Ex.35
     # TODO: create an instance of `AStar` with the `MDATestsTravelDistToNearestLabHeuristic`,
@@ -347,7 +361,6 @@ def run_all_experiments():
     mda_problem_with_astar_experiments()
     mda_problem_with_weighted_astar_experiments()
     monetary_cost_objectives_mda_problem_experiments()
-    exit()
     multiple_objectives_mda_problem_experiments()
     mda_problem_with_astar_epsilon_experiments()
     mda_problem_anytime_astar_experiments()
